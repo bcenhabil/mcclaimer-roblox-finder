@@ -18,7 +18,7 @@ import uvicorn
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# ---------- SCAN LOG ----------
+# ---------- SCAN LOG (every group checked) ----------
 scan_log = deque(maxlen=250)
 check_timestamps = deque(maxlen=10000)
 
@@ -316,7 +316,7 @@ HTML_PAGE = """
             <div class="table-wrapper">
                 <table id="hitsTable">
                     <thead><tr><th>Time</th><th>ID</th><th>Name</th><th>Members</th></tr></thead>
-                    <tbody id="hitsBody"><tr><td colspan="4">Loading...</td></tr></tbody>
+                    <tbody id="hitsBody"><tr><td colspan="4">Loading...</tr></tr></tbody>
                 </table>
             </div>
         </div>
