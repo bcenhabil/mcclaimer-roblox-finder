@@ -404,6 +404,10 @@ HTML_PAGE = """
 async def dashboard():
     return HTMLResponse(content=HTML_PAGE)
 
+@app.head("/")
+async def dashboard_head():
+    return Response()
+
 # ---------- FIXED API ENDPOINT (handles empty min_members) ----------
 @app.get("/api/hits")
 async def api_hits(search: str = "", min_members: str = ""):
