@@ -126,114 +126,175 @@ def random_ua():
 app = FastAPI()
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
-# ---------- ENHANCED DASHBOARD WITH BETTER COLOR GRADING ----------
+# ---------- RESPONSIVE DASHBOARD (mobile-first) ----------
 HTML_PAGE = """
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Roblox Community Finder | Premium Gradients</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Roblox Community Finder | Responsive</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; transition: all 0.2s ease; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
         body {
-            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(145deg, #0a0f1f 0%, #0d1b2a 35%, #1b263b 100%);
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            background: linear-gradient(145deg, #0a0f1f 0%, #0d1b2a 50%, #1b263b 100%);
             min-height: 100vh;
-            padding: 2rem;
+            padding: 1rem;
             color: #eef;
         }
-        /* Glassmorphism with gradient borders */
-        .glass {
-            background: rgba(15, 25, 45, 0.55);
-            backdrop-filter: blur(12px);
-            border-radius: 32px;
-            border: 1px solid rgba(0, 255, 157, 0.25);
-            box-shadow: 0 15px 35px rgba(0,0,0,0.3), inset 0 0 20px rgba(0,255,157,0.05);
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
         }
-        .container { max-width: 1600px; margin: auto; }
+        /* Header */
+        .header {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
         h1 {
-            font-size: 2.7rem;
-            background: linear-gradient(135deg, #00ff9d, #00d4ff, #3b82f6);
+            font-size: clamp(1.6rem, 5vw, 2.5rem);
+            background: linear-gradient(135deg, #00ff9d, #00d4ff);
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
-            display: inline-block;
-            letter-spacing: -0.5px;
-            animation: fadeInDown 0.7s cubic-bezier(0.2, 0.9, 0.4, 1.1);
-        }
-        @keyframes fadeInDown {
-            from { opacity: 0; transform: translateY(-30px) scale(0.95); }
-            to { opacity: 1; transform: translateY(0) scale(1); }
-        }
-        @keyframes pulseGlow {
-            0% { text-shadow: 0 0 2px #00ff9d; opacity: 0.7; }
-            50% { text-shadow: 0 0 12px #00ff9d; opacity: 1; }
-            100% { text-shadow: 0 0 2px #00ff9d; opacity: 0.7; }
+            letter-spacing: -0.02em;
         }
         .live-badge {
             background: linear-gradient(110deg, #ff3366, #ff6b4a);
-            display: inline-block;
-            padding: 0.25rem 1rem;
-            border-radius: 60px;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             font-weight: 600;
-            margin-left: 16px;
-            box-shadow: 0 0 10px rgba(255,51,102,0.5);
-            animation: pulseGlow 2s infinite;
+            padding: 0.2rem 0.8rem;
+            border-radius: 40px;
+            margin-left: 0.5rem;
+            display: inline-block;
+            vertical-align: middle;
+            animation: pulse 2s infinite;
         }
-        .stats-grid {
+        @keyframes pulse {
+            0% { opacity: 0.7; box-shadow: 0 0 0 0 #ff3366; }
+            70% { opacity: 1; box-shadow: 0 0 0 6px rgba(255,51,102,0); }
+            100% { opacity: 0.7; box-shadow: 0 0 0 0 rgba(255,51,102,0); }
+        }
+        .toggle-group {
             display: flex;
-            gap: 1.5rem;
+            gap: 1rem;
             flex-wrap: wrap;
-            margin: 2rem 0;
+            background: rgba(30, 42, 62, 0.7);
+            backdrop-filter: blur(8px);
+            padding: 0.5rem 1rem;
+            border-radius: 60px;
+            border: 1px solid rgba(0,255,157,0.2);
+        }
+        .toggle-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+        }
+        /* Custom toggle switch */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: 0.2s;
+            border-radius: 34px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.2s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: #00ff9d;
+        }
+        input:checked + .slider:before {
+            transform: translateX(20px);
+        }
+        /* Stats grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
         }
         .stat-card {
-            flex: 1;
-            min-width: 150px;
-            padding: 1.3rem;
-            text-align: center;
-            background: rgba(12, 20, 35, 0.65);
+            background: rgba(15, 25, 45, 0.7);
             backdrop-filter: blur(8px);
-            border-radius: 28px;
-            border: 1px solid rgba(0, 255, 157, 0.2);
-            transition: all 0.25s ease;
+            border-radius: 24px;
+            padding: 1rem;
+            text-align: center;
+            border: 1px solid rgba(0,255,157,0.2);
+            transition: transform 0.2s;
         }
         .stat-card:hover {
-            transform: translateY(-6px);
+            transform: translateY(-4px);
             border-color: #00ff9d;
-            box-shadow: 0 12px 28px rgba(0,255,157,0.2);
-            background: rgba(20, 35, 55, 0.8);
         }
         .stat-value {
-            font-size: 2.6rem;
+            font-size: clamp(1.8rem, 6vw, 2.4rem);
             font-weight: 800;
             background: linear-gradient(135deg, #00ff9d, #aaffdd);
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
-            letter-spacing: -1px;
         }
+        .stat-label {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 0.3rem;
+            color: #bbccff;
+        }
+        /* Controls row */
         .controls {
             display: flex;
-            gap: 1rem;
             flex-wrap: wrap;
+            gap: 0.8rem;
             margin-bottom: 1.8rem;
             align-items: center;
         }
-        input, select, button {
+        input, button {
             background: #1e2a3e;
             border: 1px solid #2d3a5a;
-            padding: 10px 20px;
+            padding: 0.7rem 1.2rem;
             border-radius: 60px;
             color: white;
             font-size: 0.9rem;
-            transition: 0.2s;
+            font-family: inherit;
         }
-        input:focus, select:focus {
+        input:focus {
             outline: none;
             border-color: #00ff9d;
-            box-shadow: 0 0 0 2px rgba(0,255,157,0.2);
         }
         button {
             background: linear-gradient(95deg, #00ff9d, #00d4ff);
@@ -241,193 +302,230 @@ HTML_PAGE = """
             font-weight: bold;
             border: none;
             cursor: pointer;
+            transition: 0.2s;
         }
-        button:hover {
-            transform: scale(1.02);
-            box-shadow: 0 4px 12px rgba(0,255,157,0.4);
+        button:active {
+            transform: scale(0.97);
         }
-        .toggle-switch {
+        /* Two-column layout (responsive) */
+        .two-columns {
             display: flex;
-            align-items: center;
-            gap: 10px;
-            background: #1e2a3e;
-            padding: 6px 18px;
-            border-radius: 60px;
-            border: 1px solid #2d3a5a;
-        }
-        .flex-row {
-            display: flex;
-            gap: 1.8rem;
             flex-wrap: wrap;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
         }
-        .hits-panel, .log-panel {
+        .panel {
+            flex: 2;
+            min-width: 250px;
             background: rgba(10, 18, 30, 0.6);
             backdrop-filter: blur(8px);
             border-radius: 28px;
-            padding: 1.5rem;
+            padding: 1.2rem;
             border: 1px solid rgba(0, 180, 255, 0.15);
         }
-        .hits-panel { flex: 2; }
-        .log-panel { flex: 1.2; max-height: 580px; overflow-y: auto; }
+        .log-panel {
+            flex: 1.2;
+            min-width: 260px;
+            max-height: 550px;
+            overflow-y: auto;
+        }
+        .panel h3 {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        /* Table responsiveness */
+        .table-wrapper {
+            overflow-x: auto;
+            border-radius: 20px;
+        }
         table {
             width: 100%;
             border-collapse: collapse;
+            font-size: 0.85rem;
         }
         th, td {
-            padding: 12px 10px;
+            padding: 0.8rem 0.5rem;
             text-align: left;
-            border-bottom: 1px solid rgba(0, 255, 157, 0.15);
+            border-bottom: 1px solid rgba(0,255,157,0.15);
         }
         th {
             color: #00ff9d;
             font-weight: 600;
-            letter-spacing: 0.5px;
         }
+        .copy-id {
+            background: rgba(0,255,157,0.2);
+            padding: 0.2rem 0.8rem;
+            border-radius: 40px;
+            font-size: 0.7rem;
+            cursor: pointer;
+            display: inline-block;
+            transition: 0.1s;
+        }
+        .copy-id:active {
+            background: rgba(0,255,157,0.5);
+        }
+        /* Log entries */
         .log-entry {
-            font-size: 0.8rem;
-            padding: 8px 12px;
-            margin-bottom: 6px;
+            font-size: 0.75rem;
+            padding: 0.6rem 0.8rem;
+            margin-bottom: 0.5rem;
             border-radius: 16px;
-            background: rgba(0,0,0,0.2);
+            background: rgba(0,0,0,0.3);
             border-left: 3px solid;
-            animation: slideIn 0.2s ease;
+            word-break: break-word;
         }
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateX(-12px); }
-            to { opacity: 1; transform: translateX(0); }
-        }
-        .log-hit { border-left-color: #00ff9d; color: #ccffdd; }
-        .log-rate_limit { border-left-color: #ffaa44; color: #ffe6cc; }
-        .log-error { border-left-color: #ff6666; color: #ffcccc; }
-        .log-info { border-left-color: #3b82f6; color: #cce5ff; }
+        .log-hit { border-left-color: #00ff9d; }
+        .log-rate_limit { border-left-color: #ffaa44; }
+        .log-error { border-left-color: #ff6666; }
+        .log-info { border-left-color: #3b82f6; }
+        /* Footer */
         .tos-footer {
             text-align: center;
-            margin-top: 2.5rem;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             padding: 1rem;
-            background: rgba(0,0,0,0.35);
+            background: rgba(0,0,0,0.3);
             border-radius: 60px;
-            backdrop-filter: blur(5px);
-            color: #bbbbdd;
+            margin-top: 1.5rem;
         }
+        /* Theme toggle button */
         .theme-toggle {
             position: fixed;
-            bottom: 24px;
-            right: 24px;
+            bottom: 20px;
+            right: 20px;
             background: #1e2a3e;
+            width: 48px;
+            height: 48px;
             border-radius: 50%;
-            width: 52px;
-            height: 52px;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            font-size: 1.5rem;
-            backdrop-filter: blur(10px);
+            font-size: 1.4rem;
+            backdrop-filter: blur(8px);
             border: 1px solid rgba(0,255,157,0.3);
+            z-index: 100;
             transition: 0.2s;
         }
-        .theme-toggle:hover { transform: scale(1.05); border-color: #00ff9d; }
+        .theme-toggle:active {
+            transform: scale(0.95);
+        }
+        /* Light mode */
         .light-mode {
             background: linear-gradient(145deg, #eef2f7, #d9e2ec);
             color: #1a1f2e;
         }
-        .light-mode .glass, .light-mode .stat-card, .light-mode .hits-panel, .light-mode .log-panel {
+        .light-mode .stat-card,
+        .light-mode .panel,
+        .light-mode .toggle-group {
             background: rgba(255,255,255,0.7);
-            backdrop-filter: blur(10px);
+            backdrop-filter: blur(8px);
             color: #1a1f2e;
             border-color: rgba(0,100,80,0.2);
         }
-        .light-mode .stat-value { background: linear-gradient(135deg, #008866, #00aaff); -webkit-background-clip: text; }
-        ::-webkit-scrollbar { width: 6px; }
+        .light-mode .stat-value {
+            background: linear-gradient(135deg, #008866, #00aaff);
+            -webkit-background-clip: text;
+        }
+        .light-mode .log-entry {
+            background: rgba(0,0,0,0.05);
+        }
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-track { background: #1e2a3e; border-radius: 10px; }
         ::-webkit-scrollbar-thumb { background: #00ff9d; border-radius: 10px; }
-        .copy-id {
-            background: rgba(0,255,157,0.2);
-            padding: 4px 12px;
-            border-radius: 40px;
-            cursor: pointer;
-            font-size: 0.75rem;
-            font-weight: bold;
-            transition: 0.1s;
-        }
-        .copy-id:hover { background: rgba(0,255,157,0.5); }
+        /* No overflow on small screens */
+        body, .container { overflow-x: hidden; }
+        button, .copy-id { touch-action: manipulation; }
     </style>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,600;14..32,800&display=swap" rel="stylesheet">
 </head>
 <body>
 <div class="container">
-    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
-        <h1>⚡ Roblox Community Finder <span class="live-badge">LIVE & TOS SAFE</span></h1>
-        <div class="toggle-switch">
-            <span>🔗 Show Join Links</span>
-            <label style="position:relative; display:inline-block; width:44px; height:22px; margin-left:8px;">
-                <input type="checkbox" id="showLinksToggle" style="opacity:0; width:0; height:0;">
-                <span style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background:#ccc; border-radius:34px; transition:.2s;"></span>
-                <span style="position:absolute; content:''; height:16px; width:16px; left:3px; bottom:3px; background:white; border-radius:50%; transition:.2s;"></span>
-            </label>
+    <div class="header">
+        <h1>⚡ Roblox Community Finder <span class="live-badge">TOS SAFE</span></h1>
+        <div class="toggle-group">
+            <div class="toggle-item">
+                <span>🔗 Show Join Links</span>
+                <label class="switch">
+                    <input type="checkbox" id="showLinksToggle">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="toggle-item">
+                <span>🔔 Desktop Alerts</span>
+                <label class="switch">
+                    <input type="checkbox" id="notifToggle">
+                    <span class="slider"></span>
+                </label>
+            </div>
         </div>
     </div>
+
     <div class="stats-grid" id="statsGrid"></div>
+
     <div class="controls">
         <input type="text" id="searchInput" placeholder="🔍 Search by name...">
         <input type="number" id="minMembers" placeholder="Min members">
-        <button id="filterBtn">Apply Filters</button>
-        <button id="exportBtn">📥 Export CSV</button>
+        <button id="filterBtn">Apply</button>
+        <button id="exportBtn">📥 CSV</button>
         <button id="testWebhookBtn">📢 Test Webhook</button>
-        <div class="toggle-switch">
-            <span>🔔 Desktop Alerts</span>
-            <input type="checkbox" id="notifToggle">
-        </div>
     </div>
-    <div class="flex-row">
-        <div class="hits-panel">
-            <h3 style="margin-bottom:15px;">📌 Discovered Communities (Joinable)</h3>
-            <div style="overflow-x:auto;">
+
+    <div class="two-columns">
+        <div class="panel">
+            <h3>📌 Discovered Communities (Joinable)</h3>
+            <div class="table-wrapper">
                 <table id="hitsTable">
                     <thead><tr><th>Time</th><th>ID</th><th>Name</th><th>Members</th><th>Action</th></tr></thead>
                     <tbody id="hitsBody"><tr><td colspan="5">Loading...</td></tr></tbody>
                 </table>
             </div>
         </div>
-        <div class="log-panel">
-            <h3 style="margin-bottom:15px;">🔄 Live Activity Log</h3>
+        <div class="panel log-panel">
+            <h3>🔄 Live Activity Log</h3>
             <div id="logContainer">Waiting for activity...</div>
         </div>
     </div>
+
     <div class="tos-footer">
-        ✅ This tool is fully compliant with Roblox Terms of Service. It only <strong>discovers</strong> public communities and provides <strong>manual join links</strong>. No automated joining, claiming, or interaction occurs. All actions require human confirmation. <br>
+        ✅ This tool is fully compliant with Roblox Terms of Service. It only <strong>discovers</strong> public communities and provides <strong>manual join links</strong>. No automated joining, claiming, or interaction occurs. All actions require human confirmation.<br>
         ⚠️ Respect Roblox rules – do not spam or harass communities. | Developed by McClaimer
     </div>
 </div>
 <div class="theme-toggle" id="themeToggle">🌙</div>
+
 <script>
     let showLinks = false;
     let notifEnabled = false;
     let lastHitCount = 0;
-    const API_BASE = "";
+
     async function loadStats() {
-        let r = await fetch('/api/status');
-        let d = await r.json();
-        document.getElementById('statsGrid').innerHTML = `
-            <div class="stat-card"><div class="stat-value" id="totalHitsAnim">${d.total_hits}</div><div>Total Hits</div></div>
-            <div class="stat-card"><div class="stat-value">${d.id_range}</div><div>ID Range</div></div>
-            <div class="stat-card"><div class="stat-value">${d.concurrency}</div><div>Concurrency</div></div>
-            <div class="stat-card"><div class="stat-value">${d.proxy_enabled ? '✅' : '❌'}</div><div>Proxy Mode</div></div>
-        `;
-        animateNumber('totalHitsAnim', lastHitCount, d.total_hits);
-        lastHitCount = d.total_hits;
+        try {
+            const res = await fetch('/api/status');
+            const d = await res.json();
+            document.getElementById('statsGrid').innerHTML = `
+                <div class="stat-card"><div class="stat-value" id="totalHitsAnim">${d.total_hits}</div><div class="stat-label">Total Hits</div></div>
+                <div class="stat-card"><div class="stat-value">${d.id_range}</div><div class="stat-label">ID Range</div></div>
+                <div class="stat-card"><div class="stat-value">${d.concurrency}</div><div class="stat-label">Concurrency</div></div>
+                <div class="stat-card"><div class="stat-value">${d.proxy_enabled ? '✅' : '❌'}</div><div class="stat-label">Proxy Mode</div></div>
+            `;
+            animateNumber('totalHitsAnim', lastHitCount, d.total_hits);
+            lastHitCount = d.total_hits;
+        } catch(e) { console.warn(e); }
     }
+
     function animateNumber(id, start, end) {
-        let el = document.getElementById(id);
+        const el = document.getElementById(id);
         if (!el) return;
-        let range = end - start;
-        let duration = 600;
-        let stepTime = 20;
-        let steps = duration / stepTime;
-        let increment = range / steps;
+        const range = end - start;
+        const duration = 600;
+        const stepTime = 20;
+        const steps = duration / stepTime;
+        const increment = range / steps;
         let current = start;
-        let timer = setInterval(() => {
+        const timer = setInterval(() => {
             current += increment;
             if ((increment > 0 && current >= end) || (increment < 0 && current <= end)) {
                 el.innerText = end;
@@ -437,80 +535,84 @@ HTML_PAGE = """
             }
         }, stepTime);
     }
+
     async function loadHits() {
-        let search = document.getElementById('searchInput').value;
-        let minMem = document.getElementById('minMembers').value;
+        const search = document.getElementById('searchInput').value;
+        const minMem = document.getElementById('minMembers').value;
         let url = `/api/hits?search=${encodeURIComponent(search)}&min_members=${minMem}`;
-        let r = await fetch(url);
-        let data = await r.json();
-        let tbody = document.getElementById('hitsBody');
-        if (!data.hits.length) { tbody.innerHTML = '<tr><td colspan="5">✨ No communities found yet ✨</td></tr>'; return; }
-        let html = '';
-        for (let h of data.hits) {
-            let time = new Date(h.timestamp * 1000).toLocaleString();
-            let linkOrCopy = showLinks ? `<a href="https://www.roblox.com/groups/group.aspx?gid=${h.id}" target="_blank" style="color:#00ff9d; font-weight:500;">Join</a>` : `<span class="copy-id" onclick="copyId(${h.id})">📋 Copy ID</span>`;
-            html += `<tr>
-                <td>${time}</td>
-                <td>${h.id}</td>
-                <td>${escapeHtml(h.name)}</td>
-                <td>${h.members.toLocaleString()}</td>
-                <td>${linkOrCopy}</td>
-            </tr>`;
-        }
-        tbody.innerHTML = html;
-        if (notifEnabled && data.hits.length > 0 && data.hits[0].timestamp > (Date.now()/1000 - 10)) {
-            new Notification("🎯 New Community Found!", { body: data.hits[0].name, icon: "https://www.roblox.com/favicon.ico" });
-        }
+        try {
+            const res = await fetch(url);
+            const data = await res.json();
+            const tbody = document.getElementById('hitsBody');
+            if (!data.hits.length) {
+                tbody.innerHTML = '<tr><td colspan="5">✨ No communities found yet ✨</td></tr>';
+                return;
+            }
+            let html = '';
+            for (const h of data.hits) {
+                const time = new Date(h.timestamp * 1000).toLocaleString();
+                const action = showLinks 
+                    ? `<a href="https://www.roblox.com/groups/group.aspx?gid=${h.id}" target="_blank" style="color:#00ff9d; font-weight:500;">Join</a>`
+                    : `<span class="copy-id" onclick="copyId(${h.id})">📋 Copy ID</span>`;
+                html += `<tr>
+                    <td>${time}</td>
+                    <td>${h.id}</td>
+                    <td>${escapeHtml(h.name)}</td>
+                    <td>${h.members.toLocaleString()}</td>
+                    <td>${action}</td>
+                </tr>`;
+            }
+            tbody.innerHTML = html;
+            if (notifEnabled && data.hits.length > 0 && data.hits[0].timestamp > (Date.now()/1000 - 10)) {
+                new Notification("🎯 New Community Found!", { body: data.hits[0].name, icon: "https://www.roblox.com/favicon.ico" });
+            }
+        } catch(e) { console.error(e); }
     }
+
     async function loadLogs() {
-        let r = await fetch('/api/logs');
-        let logs = await r.json();
-        let container = document.getElementById('logContainer');
-        if (!logs.length) { container.innerHTML = '<div>💤 No activity yet</div>'; return; }
-        let html = '';
-        for (let log of logs) {
-            let time = new Date(log.time * 1000).toLocaleTimeString();
-            html += `<div class="log-entry log-${log.type}">[${time}] ${escapeHtml(log.message)}</div>`;
-        }
-        container.innerHTML = html;
+        try {
+            const res = await fetch('/api/logs');
+            const logs = await res.json();
+            const container = document.getElementById('logContainer');
+            if (!logs.length) { container.innerHTML = '<div>💤 No activity yet</div>'; return; }
+            let html = '';
+            for (const log of logs) {
+                const time = new Date(log.time * 1000).toLocaleTimeString();
+                html += `<div class="log-entry log-${log.type}">[${time}] ${escapeHtml(log.message)}</div>`;
+            }
+            container.innerHTML = html;
+        } catch(e) {}
     }
+
     async function exportCSV() { window.location.href = '/api/export-csv'; }
     async function testWebhook() {
-        let r = await fetch('/api/test-webhook');
-        let d = await r.json();
-        alert(d.message);
+        const res = await fetch('/api/test-webhook');
+        const data = await res.json();
+        alert(data.message);
     }
-    function copyId(id) { navigator.clipboard.writeText(id); alert(`✅ Copied ID: ${id}`); }
-    function escapeHtml(s) { return String(s).replace(/[&<>]/g, m => m==='&'?'&amp;':m==='<'?'&lt;':'&gt;'); }
-    document.getElementById('showLinksToggle').addEventListener('change', (e) => { showLinks = e.target.checked; loadHits(); });
-    document.getElementById('notifToggle').addEventListener('change', (e) => { notifEnabled = e.target.checked; if(notifEnabled && Notification.permission !== 'granted') Notification.requestPermission(); });
+    function copyId(id) {
+        navigator.clipboard.writeText(id);
+        alert(`✅ Copied ID: ${id}`);
+    }
+    function escapeHtml(s) {
+        return String(s).replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;');
+    }
+
+    document.getElementById('showLinksToggle').addEventListener('change', (e) => {
+        showLinks = e.target.checked;
+        loadHits();
+    });
+    document.getElementById('notifToggle').addEventListener('change', (e) => {
+        notifEnabled = e.target.checked;
+        if (notifEnabled && Notification.permission !== 'granted') Notification.requestPermission();
+    });
     document.getElementById('filterBtn').addEventListener('click', () => loadHits());
     document.getElementById('exportBtn').addEventListener('click', exportCSV);
     document.getElementById('testWebhookBtn').addEventListener('click', testWebhook);
-    document.getElementById('themeToggle').addEventListener('click', () => { document.body.classList.toggle('light-mode'); });
-    // Fix toggle switch styling
-    document.querySelectorAll('.toggle-switch input[type="checkbox"]').forEach(cb => {
-        let span = cb.nextElementSibling;
-        if(span && span.classList.contains('slider')) return;
-        let slider = document.createElement('span');
-        slider.className = 'slider';
-        slider.style.cssText = 'position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background:#ccc; border-radius:34px; transition:.2s;';
-        let thumb = document.createElement('span');
-        thumb.style.cssText = 'position:absolute; content:""; height:16px; width:16px; left:3px; bottom:3px; background:white; border-radius:50%; transition:.2s;';
-        cb.parentNode.style.position = 'relative';
-        cb.parentNode.style.display = 'inline-block';
-        cb.parentNode.style.width = '44px';
-        cb.parentNode.style.height = '22px';
-        cb.style.opacity = '0';
-        cb.style.width = '0';
-        cb.style.height = '0';
-        cb.parentNode.appendChild(slider);
-        cb.parentNode.appendChild(thumb);
-        cb.addEventListener('change', () => {
-            slider.style.backgroundColor = cb.checked ? '#00ff9d' : '#ccc';
-            thumb.style.transform = cb.checked ? 'translateX(22px)' : 'translateX(0)';
-        });
+    document.getElementById('themeToggle').addEventListener('click', () => {
+        document.body.classList.toggle('light-mode');
     });
+
     loadStats(); loadHits(); loadLogs();
     setInterval(() => { loadStats(); loadHits(); loadLogs(); }, 4000);
     if (Notification.permission === 'default') Notification.requestPermission();
@@ -555,7 +657,7 @@ async def api_status():
 @app.get("/api/test-webhook")
 async def test_webhook():
     try:
-        embed = Embed(title="✅ Webhook Test", description="Premium design dashboard is live!", color=0x00ff9d)
+        embed = Embed(title="✅ Webhook Test", description="Responsive dashboard is live!", color=0x00ff9d)
         embed.set_footer(text="Manual actions only | McClaimer")
         await asyncio.to_thread(webhook.send, embed=embed)
         add_log("info", "Test webhook sent")
@@ -575,7 +677,7 @@ async def export_csv():
     writer.writerows(cursor.fetchall())
     return Response(content=output.getvalue(), media_type="text/csv", headers={"Content-Disposition": "attachment; filename=hits.csv"})
 
-# ---------- DISCORD & SCANNER (unchanged, with ToS footer) ----------
+# ---------- DISCORD & SCANNER ----------
 webhook = Webhook(WEBHOOK_URL)
 start_time = time.time()
 
@@ -661,8 +763,8 @@ async def scanner():
                 done, tasks = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
 
 async def main():
-    add_log("info", f"🚀 Started with premium color grading. Scanning {ID_MIN}–{ID_MAX}, concurrency {CONCURRENCY}")
-    embed = Embed(title="✅ Bot Started – Premium UI", description=f"Scanning {ID_MIN}–{ID_MAX} with {CONCURRENCY} concurrent requests", color=0x00ff9d)
+    add_log("info", f"🚀 Responsive UI started. Scanning {ID_MIN}–{ID_MAX}, concurrency {CONCURRENCY}")
+    embed = Embed(title="✅ Bot Started – Responsive Dashboard", description=f"Scanning {ID_MIN}–{ID_MAX} with {CONCURRENCY} concurrent requests", color=0x00ff9d)
     embed.set_footer(text="No automation – discovery only | McClaimer")
     await asyncio.to_thread(webhook.send, embed=embed)
     asyncio.create_task(send_heartbeat())
