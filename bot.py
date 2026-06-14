@@ -18,7 +18,7 @@ import uvicorn
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# ---------- SCAN LOG (every group checked) ----------
+# ---------- SCAN LOG ----------
 scan_log = deque(maxlen=250)
 check_timestamps = deque(maxlen=10000)
 
@@ -42,18 +42,23 @@ def add_activity(entry_type, message, group_id=None):
 WEBHOOK_URL = os.environ.get("WEBHOOK_URL", "https://discord.com/api/webhooks/1367791217651220500/eWvP-ncpHXpEaB8smp-MvNakQGB1TjAXLQOmuWyZLL_7hE9NCEaby5v2lpHKkWIlrZ5j")
 ID_MIN = int(os.environ.get("ID_MIN", "1000000"))
 ID_MAX = int(os.environ.get("ID_MAX", "1150000"))
-CONCURRENCY = int(os.environ.get("CONCURRENCY", "500"))
+CONCURRENCY = int(os.environ.get("CONCURRENCY", "200"))
 PORT = int(os.environ.get("PORT", "8000"))
 USE_PROXY = os.environ.get("USE_PROXY", "true").lower() == "true"
 HEARTBEAT_INTERVAL = int(os.environ.get("HEARTBEAT_INTERVAL", "3600"))
 
-# Multi‑source proxy URLs
+# Multi‑source proxy URLs (removed defunct proxycrash API)
 PROXY_SOURCES = [
-    "https://api.proxycrash.com/v2/?request=getproxies&protocol=http&timeout=10000&country=all&ssl=all&anonymity=all",
     "https://raw.githubusercontent.com/vuong1330-create/proxy-ditmexm/refs/heads/main/proxy.txt",
     "https://raw.githubusercontent.com/TheSpeedX/PROXY-List/master/http.txt",
     "https://raw.githubusercontent.com/sunny9577/proxy-scraper/master/proxies.txt",
-    "https://api.proxycrash.com/v4/free-proxy-list/get?request=display_proxies&proxy_format=ipport&format=text&protocol=http&anonymity=elite",
+]
+
+# Fallback hardcoded proxies in case all sources fail
+FALLBACK_PROXIES = [
+    "http://104.193.100.242:8080",
+    "http://107.173.136.180:3128",
+    "http://136.244.15.146:3128",
 ]
 
 # ---------- PROXY MANAGER ----------
@@ -101,8 +106,8 @@ class ProxyManager:
         add_activity("info", f"Fetching proxies from {len(self.sources)} sources...")
         raw_proxies = await self.fetch_all_sources()
         if not raw_proxies:
-            add_activity("error", "No proxies fetched, keeping old list")
-            return len(self.proxies)
+            add_activity("warning", "No proxies fetched from sources, using fallback list")
+            raw_proxies = FALLBACK_PROXIES
 
         working = []
         for p in raw_proxies[:100]:
@@ -115,8 +120,9 @@ class ProxyManager:
             self.proxies = working
             self.index = 0
 
-        with open("proxies.txt", "w") as f:
-            f.write("\n".join(self.proxies))
+        if working:
+            with open("proxies.txt", "w") as f:
+                f.write("\n".join(working))
 
         add_activity("info", f"Loaded {len(self.proxies)} working proxies")
         return len(self.proxies)
