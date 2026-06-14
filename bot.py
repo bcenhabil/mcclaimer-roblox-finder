@@ -7,6 +7,7 @@ import sqlite3
 import logging
 from datetime import timedelta
 from collections import deque
+from typing import Optional
 from dhooks import Webhook, Embed
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -18,8 +19,8 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 # ---------- SCAN LOG (every group checked) ----------
-scan_log = deque(maxlen=250)          # last 250 scans for dashboard
-check_timestamps = deque(maxlen=10000) # for CPM calculation
+scan_log = deque(maxlen=250)
+check_timestamps = deque(maxlen=10000)
 
 def add_scan_log(group_id, result, details=""):
     entry = {"time": time.time(), "group_id": group_id, "result": result, "details": details}
@@ -31,7 +32,7 @@ def get_cpm():
     cutoff = now - 60
     return sum(1 for ts in check_timestamps if ts > cutoff)
 
-# ---------- ACTIVITY LOG (important events) ----------
+# ---------- ACTIVITY LOG ----------
 activity_log = deque(maxlen=200)
 def add_activity(entry_type, message, group_id=None):
     activity_log.appendleft({"time": time.time(), "type": entry_type, "message": message, "group_id": group_id})
@@ -41,12 +42,12 @@ def add_activity(entry_type, message, group_id=None):
 WEBHOOK_URL = os.environ.get("WEBHOOK_URL", "https://discord.com/api/webhooks/1367791217651220500/eWvP-ncpHXpEaB8smp-MvNakQGB1TjAXLQOmuWyZLL_7hE9NCEaby5v2lpHKkWIlrZ5j")
 ID_MIN = int(os.environ.get("ID_MIN", "1000000"))
 ID_MAX = int(os.environ.get("ID_MAX", "1150000"))
-CONCURRENCY = int(os.environ.get("CONCURRENCY", "500"))   # high for speed
+CONCURRENCY = int(os.environ.get("CONCURRENCY", "500"))
 PORT = int(os.environ.get("PORT", "8000"))
 USE_PROXY = os.environ.get("USE_PROXY", "true").lower() == "true"
 HEARTBEAT_INTERVAL = int(os.environ.get("HEARTBEAT_INTERVAL", "3600"))
 
-# Multi‑source proxy URLs (free, frequently updated lists)
+# Multi‑source proxy URLs
 PROXY_SOURCES = [
     "https://api.proxycrash.com/v2/?request=getproxies&protocol=http&timeout=10000&country=all&ssl=all&anonymity=all",
     "https://raw.githubusercontent.com/vuong1330-create/proxy-ditmexm/refs/heads/main/proxy.txt",
@@ -55,7 +56,7 @@ PROXY_SOURCES = [
     "https://api.proxycrash.com/v4/free-proxy-list/get?request=display_proxies&proxy_format=ipport&format=text&protocol=http&anonymity=elite",
 ]
 
-# ---------- MULTI-SOURCE PROXY MANAGER ----------
+# ---------- PROXY MANAGER ----------
 class ProxyManager:
     def __init__(self, sources):
         self.sources = sources
@@ -63,7 +64,7 @@ class ProxyManager:
         self.index = 0
         self.lock = asyncio.Lock()
         self.last_refresh = 0
-        self.refresh_interval = 600  # 10 minutes
+        self.refresh_interval = 600
 
     async def fetch_single_source(self, session, url):
         try:
@@ -71,7 +72,6 @@ class ProxyManager:
                 if resp.status == 200:
                     text = await resp.text()
                     lines = [line.strip() for line in text.split('\n') if line.strip() and ':' in line]
-                    # ensure http:// prefix
                     proxies = [f"http://{line}" if not line.startswith('http') else line for line in lines]
                     return proxies
         except Exception as e:
@@ -86,7 +86,6 @@ class ProxyManager:
             for proxies in results:
                 if isinstance(proxies, list):
                     all_proxies.update(proxies)
-        # Remove malformed
         valid = [p for p in all_proxies if ':' in p and len(p) < 100]
         return list(valid)
 
@@ -105,12 +104,10 @@ class ProxyManager:
             add_activity("error", "No proxies fetched, keeping old list")
             return len(self.proxies)
 
-        # Test first 100 proxies for speed (limit testing)
         working = []
         for p in raw_proxies[:100]:
             if await self.test_proxy(p):
                 working.append(p)
-        # If we have few working, fallback to untested but deduplicated
         if len(working) < 10:
             working = raw_proxies[:500]
 
@@ -118,11 +115,10 @@ class ProxyManager:
             self.proxies = working
             self.index = 0
 
-        # Write to file for persistence
         with open("proxies.txt", "w") as f:
             f.write("\n".join(self.proxies))
 
-        add_activity("info", f"Loaded {len(self.proxies)} working proxies from {len(self.sources)} sources")
+        add_activity("info", f"Loaded {len(self.proxies)} working proxies")
         return len(self.proxies)
 
     async def next(self):
@@ -141,7 +137,7 @@ class ProxyManager:
 
 proxy_manager = ProxyManager(PROXY_SOURCES) if USE_PROXY else None
 
-# ---------- DATABASE (SQLite) ----------
+# ---------- DATABASE ----------
 conn = sqlite3.connect('hits.db', check_same_thread=False)
 cursor = conn.cursor()
 cursor.execute('''
@@ -170,7 +166,7 @@ def get_total_hits_count():
     cursor.execute("SELECT COUNT(*) FROM hits")
     return cursor.fetchone()[0]
 
-# ---------- USER AGENT ROTATION ----------
+# ---------- USER AGENT ----------
 USER_AGENTS = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
@@ -178,11 +174,11 @@ USER_AGENTS = [
 def random_ua():
     return random.choice(USER_AGENTS)
 
-# ---------- FASTAPI APP ----------
+# ---------- FASTAPI ----------
 app = FastAPI()
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
-# ---------- HTML DASHBOARD (CPM + scan log + responsive) ----------
+# ---------- HTML DASHBOARD ----------
 HTML_PAGE = """
 <!DOCTYPE html>
 <html lang="en">
@@ -343,7 +339,8 @@ HTML_PAGE = """
     async function loadHits() {
         let search = document.getElementById('searchInput').value;
         let minMem = document.getElementById('minMembers').value;
-        let res = await fetch(`/api/hits?search=${encodeURIComponent(search)}&min_members=${minMem}`);
+        let url = `/api/hits?search=${encodeURIComponent(search)}&min_members=${minMem || ''}`;
+        let res = await fetch(url);
         let data = await res.json();
         let tbody = document.getElementById('hitsBody');
         if (!data.hits.length) { tbody.innerHTML = '<tr><td colspan="4">✨ No joinable communities yet ✨</td></tr>'; return; }
@@ -402,14 +399,15 @@ HTML_PAGE = """
 async def dashboard():
     return HTMLResponse(content=HTML_PAGE)
 
+# ---------- FIXED API ENDPOINT (handles empty min_members) ----------
 @app.get("/api/hits")
-async def api_hits(search: str = "", min_members: int = 0):
+async def api_hits(search: str = "", min_members: Optional[int] = None):
     query = "SELECT id, name, member_count, created, timestamp, description FROM hits WHERE 1=1"
     params = []
     if search:
         query += " AND name LIKE ?"
         params.append(f"%{search}%")
-    if min_members > 0:
+    if min_members is not None and min_members > 0:
         query += " AND member_count >= ?"
         params.append(min_members)
     query += " ORDER BY timestamp DESC LIMIT 100"
@@ -438,7 +436,7 @@ async def api_status():
 @app.get("/api/test-webhook")
 async def test_webhook():
     try:
-        embed = Embed(title="✅ Webhook Test", description="Multi‑source proxy mode is active and scanning!", color=0x00ff9d)
+        embed = Embed(title="✅ Webhook Test", description="Multi‑source proxy mode is active!", color=0x00ff9d)
         embed.set_footer(text="Manual actions only | McClaimer")
         await asyncio.to_thread(webhook.send, embed=embed)
         add_activity("info", "Test webhook sent")
