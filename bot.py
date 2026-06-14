@@ -47,14 +47,13 @@ PORT = int(os.environ.get("PORT", "8000"))
 USE_PROXY = os.environ.get("USE_PROXY", "true").lower() == "true"
 HEARTBEAT_INTERVAL = int(os.environ.get("HEARTBEAT_INTERVAL", "3600"))
 
-# Multi‑source proxy URLs (removed defunct proxycrash API)
+# Multi‑source proxy URLs
 PROXY_SOURCES = [
     "https://raw.githubusercontent.com/vuong1330-create/proxy-ditmexm/refs/heads/main/proxy.txt",
     "https://raw.githubusercontent.com/TheSpeedX/PROXY-List/master/http.txt",
     "https://raw.githubusercontent.com/sunny9577/proxy-scraper/master/proxies.txt",
 ]
 
-# Fallback hardcoded proxies in case all sources fail
 FALLBACK_PROXIES = [
     "http://104.193.100.242:8080",
     "http://107.173.136.180:3128",
@@ -316,7 +315,7 @@ HTML_PAGE = """
             <div class="table-wrapper">
                 <table id="hitsTable">
                     <thead><tr><th>Time</th><th>ID</th><th>Name</th><th>Members</th></tr></thead>
-                    <tbody id="hitsBody"><tr><td colspan="4">Loading...</tr></tr></tbody>
+                    <tbody id="hitsBody"><tr><td colspan="4">Loading...</td></table></tbody>
                 </table>
             </div>
         </div>
@@ -407,15 +406,15 @@ async def dashboard():
 
 # ---------- FIXED API ENDPOINT (handles empty min_members) ----------
 @app.get("/api/hits")
-async def api_hits(search: str = "", min_members: Optional[int] = None):
+async def api_hits(search: str = "", min_members: str = ""):
     query = "SELECT id, name, member_count, created, timestamp, description FROM hits WHERE 1=1"
     params = []
     if search:
         query += " AND name LIKE ?"
         params.append(f"%{search}%")
-    if min_members is not None and min_members > 0:
+    if min_members and min_members.isdigit():
         query += " AND member_count >= ?"
-        params.append(min_members)
+        params.append(int(min_members))
     query += " ORDER BY timestamp DESC LIMIT 100"
     cursor.execute(query, params)
     rows = cursor.fetchall()
